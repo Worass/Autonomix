@@ -34,11 +34,12 @@ void FAutonomixGeminiClient::SetReasoningEffort(EAutonomixReasoningEffort InEffo
 
 FString FAutonomixGeminiClient::ReasoningEffortToGeminiString(EAutonomixReasoningEffort Effort)
 {
+	// Gemini thinkingLevel uses lowercase strings (matches Google GenAI SDK)
 	switch (Effort)
 	{
-	case EAutonomixReasoningEffort::Low:    return TEXT("LOW");
-	case EAutonomixReasoningEffort::Medium: return TEXT("MEDIUM");
-	case EAutonomixReasoningEffort::High:   return TEXT("HIGH");
+	case EAutonomixReasoningEffort::Low:    return TEXT("low");
+	case EAutonomixReasoningEffort::Medium: return TEXT("medium");
+	case EAutonomixReasoningEffort::High:   return TEXT("high");
 	default:                                return TEXT("");
 	}
 }
@@ -148,31 +149,36 @@ TSharedPtr<FJsonObject> FAutonomixGeminiClient::BuildRequestBody(
 	GenConfig->SetNumberField(TEXT("maxOutputTokens"), (double)MaxTokens);
 	GenConfig->SetNumberField(TEXT("temperature"), 0.0);
 
-	// Thinking config
-	if (ThinkingBudgetTokens > 0 || ReasoningEffort != EAutonomixReasoningEffort::Disabled)
+	// Thinking config — model-aware gating (ported from Roo Code's getGeminiReasoning)
+	// Only Gemini 2.5+ models support thinkingConfig. Sending it to older models
+	// (1.5, 2.0) causes 400 errors like "Unknown name at 'generation_config'".
+	// Budget-based (2.5): thinkingConfig.thinkingBudget = N
+	// Effort-based (3.x): thinkingConfig.thinkingLevel = "low"/"medium"/"high"
+	// These are mutually exclusive — budget for 2.5, level for 3.x.
+	bool bIsBudgetModel = ModelId.Contains(TEXT("2.5-"));
+	bool bIsEffortModel = ModelId.Contains(TEXT("3.")) || ModelId.Contains(TEXT("3-"));
+
+	if (bIsBudgetModel && ThinkingBudgetTokens > 0)
 	{
+		// Gemini 2.5 Pro/Flash: budget-based thinking
 		TSharedPtr<FJsonObject> ThinkConfig = MakeShared<FJsonObject>();
-
-		if (ThinkingBudgetTokens > 0)
-		{
-			// Gemini 2.5 style: thinkingBudget integer
-			ThinkConfig->SetNumberField(TEXT("thinkingBudget"), (double)ThinkingBudgetTokens);
-		}
-
-		if (ReasoningEffort != EAutonomixReasoningEffort::Disabled)
-		{
-			// Gemini 3.x style: thoughtsConfig.reasoningEffort string
-			FString EffortStr = ReasoningEffortToGeminiString(ReasoningEffort);
-			if (!EffortStr.IsEmpty())
-			{
-				TSharedPtr<FJsonObject> ThoughtsConfig = MakeShared<FJsonObject>();
-				ThoughtsConfig->SetStringField(TEXT("reasoningEffort"), EffortStr);
-				ThinkConfig->SetObjectField(TEXT("thoughtsConfig"), ThoughtsConfig);
-			}
-		}
-
+		ThinkConfig->SetNumberField(TEXT("thinkingBudget"), (double)ThinkingBudgetTokens);
+		ThinkConfig->SetBoolField(TEXT("includeThoughts"), true);
 		GenConfig->SetObjectField(TEXT("thinkingConfig"), ThinkConfig);
 	}
+	else if (bIsEffortModel && ReasoningEffort != EAutonomixReasoningEffort::Disabled)
+	{
+		// Gemini 3.x: effort/level-based thinking (low/medium/high)
+		FString LevelStr = ReasoningEffortToGeminiString(ReasoningEffort);
+		if (!LevelStr.IsEmpty())
+		{
+			TSharedPtr<FJsonObject> ThinkConfig = MakeShared<FJsonObject>();
+			ThinkConfig->SetStringField(TEXT("thinkingLevel"), LevelStr);
+			ThinkConfig->SetBoolField(TEXT("includeThoughts"), true);
+			GenConfig->SetObjectField(TEXT("thinkingConfig"), ThinkConfig);
+		}
+	}
+	// For non-thinking models (1.5, 2.0, etc.): no thinkingConfig sent — avoids API errors
 
 	Body->SetObjectField(TEXT("generationConfig"), GenConfig);
 

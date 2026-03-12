@@ -14,12 +14,13 @@
  * Authentication: ?key=<API_KEY> query parameter (Google AI Studio) or Bearer token (Vertex).
  *
  * Supports:
- *   - Gemini 2.5 Pro/Flash: thinking budget (thinkingConfig.thinkingBudget)
- *   - Gemini 3.x: reasoning effort (thinkingConfig.thoughtsConfig.reasoningEffort = LOW/MEDIUM/HIGH)
+ *   - Gemini 2.5 Pro/Flash: thinking budget (thinkingConfig.thinkingBudget = N, includeThoughts=true)
+ *   - Gemini 3.x: reasoning effort (thinkingConfig.thinkingLevel = "low"/"medium"/"high")
+ *   - Non-thinking models (1.5, 2.0): no thinkingConfig sent (avoids 400 errors)
  *   - Tool calling via functionDeclarations (maps to Autonomix tool schemas)
  *   - Streaming via SSE (ndjson chunks with generationComplete)
  *
- * Adapted from Roo Code's GeminiHandler — adapted for C++ UE5 HTTP pipeline.
+ * Adapted from Roo Code's GeminiHandler + getGeminiReasoning — adapted for C++ UE5 HTTP pipeline.
  */
 class AUTONOMIXLLM_API FAutonomixGeminiClient : public IAutonomixLLMClient
 {

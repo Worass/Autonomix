@@ -28,8 +28,8 @@ UAutonomixDeveloperSettings::UAutonomixDeveloperSettings()
 	// --- Google Gemini defaults ---
 	GeminiModelId = TEXT("gemini-2.5-pro");
 	GeminiBaseUrl = TEXT("");  // empty = official generativelanguage.googleapis.com
-	GeminiThinkingBudgetTokens = 8192;
-	GeminiReasoningEffort = EAutonomixReasoningEffort::Low;
+	GeminiThinkingBudgetTokens = 0;  // 0 = disabled by default. User must opt-in for thinking models.
+	GeminiReasoningEffort = EAutonomixReasoningEffort::Disabled;  // Disabled by default. Prevents sending unknown fields to non-thinking models.
 
 	// --- DeepSeek defaults ---
 	DeepSeekModelId = TEXT("deepseek-chat");
