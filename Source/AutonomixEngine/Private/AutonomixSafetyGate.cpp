@@ -6,6 +6,10 @@
 #include "AutonomixCoreModule.h"
 #include "Misc/Paths.h"
 
+#if PLATFORM_WINDOWS
+#include "Windows/WindowsSystemIncludes.h"
+#endif
+
 FAutonomixSafetyGate::FAutonomixSafetyGate()
 {
 	InitializeDefaults();
@@ -135,6 +139,28 @@ bool FAutonomixSafetyGate::IsPathAllowed(const FString& FilePath) const
 	FPaths::NormalizeFilename(NormalizedPath);
 	FPaths::CollapseRelativeDirectories(NormalizedPath);
 	FPaths::RemoveDuplicateSlashes(NormalizedPath);
+
+	// Additional security: reject paths that still contain ".." after normalization
+	// This catches malformed paths that CollapseRelativeDirectories couldn't resolve
+	if (NormalizedPath.Contains(TEXT("..")))
+	{
+		UE_LOG(LogAutonomix, Warning, TEXT("Path traversal attempt detected in normalized path: %s (original: %s)"), *NormalizedPath, *FilePath);
+		return false;
+	}
+
+	// Check for symlink/junction points on Windows (basic check)
+#if PLATFORM_WINDOWS
+	if (FPaths::FileExists(NormalizedPath))
+	{
+		// Use Windows API to check if it's a reparse point (symlink/junction)
+		DWORD Attributes = GetFileAttributesW(*NormalizedPath);
+		if (Attributes != INVALID_FILE_ATTRIBUTES && (Attributes & FILE_ATTRIBUTE_REPARSE_POINT))
+		{
+			UE_LOG(LogAutonomix, Warning, TEXT("Symlink/junction point access denied: %s"), *NormalizedPath);
+			return false;
+		}
+	}
+#endif
 
 	for (const FString& Allowed : AllowedWritePaths)
 	{

@@ -195,7 +195,8 @@ FString UAutonomixDeveloperSettings::GetEffectiveEndpoint() const
 	case EAutonomixProvider::Custom:
 		return CustomBaseUrl;
 	default:
-		return DefaultApiEndpoint;
+		UE_LOG(LogAutonomix, Error, TEXT("Invalid ActiveProvider enum value: %d"), (int32)ActiveProvider);
+		return TEXT("");
 	}
 }
 
@@ -214,7 +215,9 @@ FString UAutonomixDeveloperSettings::GetActiveApiKey() const
 	case EAutonomixProvider::Ollama:     return TEXT("");   // no auth for local
 	case EAutonomixProvider::LMStudio:   return TEXT("");   // no auth for local
 	case EAutonomixProvider::Custom:     return CustomApiKey;
-	default: return ApiKey;
+	default:
+		UE_LOG(LogAutonomix, Error, TEXT("Invalid ActiveProvider enum value: %d"), (int32)ActiveProvider);
+		return TEXT("");
 	}
 }
 
@@ -253,7 +256,8 @@ FString UAutonomixDeveloperSettings::GetEffectiveModel() const
 	case EAutonomixProvider::GitHubCopilot:
 		return CopilotModelId.IsEmpty() ? TEXT("gpt-4") : CopilotModelId;
 	default:
-		return ModelEnumToApiString(EAutonomixClaudeModel::Sonnet_4_6);
+		UE_LOG(LogAutonomix, Error, TEXT("Invalid ActiveProvider enum value: %d"), (int32)ActiveProvider);
+		return TEXT("");
 	}
 }
 

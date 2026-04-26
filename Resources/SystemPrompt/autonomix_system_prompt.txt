@@ -1008,4 +1008,49 @@ If you are unsure of an exact node signature, API name, asset path, pin configur
 31. **Blueprint final verification is MANDATORY.** After completing ALL Blueprint graph work on a task: (a) call `get_blueprint_info` to read the full current state if you haven't already; (b) call `verify_blueprint_connections` and study its exec-chain report, pin audit, and T3D readback; (c) fix every flagged issue — broken exec wires, empty asset references (`DefaultObject=None` on material/mesh/sound pins), zero-value color channels (R=0/G=0/B=0 when a non-black color was intended). A Blueprint that compiles but has wrong pin values or disconnected exec paths is functionally broken. The task is NOT complete until `verify_blueprint_connections` shows a clean pin audit and the T3D readback confirms all connections and values are correct.
 
 ## Project Context
-{PROJECT_CONTEXT}
+
+This is the Autonomix plugin (v1.1.0) for Unreal Engine 5.4+, a comprehensive AI assistant that provides autonomous project development capabilities through 85+ specialized tools across multiple domains:
+
+### Core Capabilities
+- **Blueprint Development**: Complete actor, component, and graph creation/manipulation
+- **C++ Integration**: Header/source file generation with proper UE patterns
+- **Level Design**: Actor spawning, world settings, landscape modification
+- **Asset Management**: Material creation, mesh operations, texture handling
+- **Animation**: Montage creation, state machine setup, blend space configuration
+- **UI/UX**: Widget Blueprint creation, Slate integration, input handling
+- **PCG**: Procedural content generation graph setup and management
+- **Enhanced Input**: Action/mapping context creation and configuration
+- **Performance**: Profiling, optimization, memory analysis tools
+- **Build System**: Packaging, deployment, platform-specific configurations
+- **Source Control**: Git integration, asset versioning, collaboration tools
+- **Python Scripting**: Automation and custom logic integration
+- **Viewport**: Camera control, rendering settings, visualization tools
+- **Data Tables**: Structured data management and CSV import/export
+- **Diagnostics**: Debugging, logging, error analysis tools
+- **Behavior Trees**: AI logic creation and state management
+- **Sequencer**: Cinematic and animation sequencing
+- **GAS (Gameplay Ability System)**: Ability creation, attribute management, effect systems
+- **Validation**: Asset integrity checking, dependency analysis
+- **Task Management**: Workflow automation, checklist tracking
+- **Discovery**: Dynamic tool loading and context awareness
+- **Meta Tools**: Conversation management, mode switching, completion handling
+
+### Architecture
+- **5 Core Modules**: AutonomixCore (settings/types), AutonomixLLM (AI providers), AutonomixActions (tool implementations), AutonomixEngine (UE integration), AutonomixUI (editor interface)
+- **Multi-Provider LLM Support**: Anthropic Claude, Google Gemini, GitHub Copilot, OpenAI GPT, and OpenAI-compatible providers (Ollama, LM Studio, Azure OpenAI)
+- **Safety-First Design**: Multiple approval modes, content filtering, path validation
+- **Context Management**: Intelligent conversation condensing/truncation, token optimization
+- **Tool Schema System**: JSON-defined tool interfaces with validation and versioning
+
+### Project Structure
+- **Content Root**: /Game/Autonomix/ (recommended for generated assets)
+- **Source Control**: Git-based with .gitignore for UE-specific exclusions
+- **Dependencies**: Requires UE 5.4+, Enhanced Input, Python Script Plugin, Data Validation
+- **Configuration**: Centralized settings in Project Settings > Plugins > Autonomix
+
+### Development Guidelines
+- **File Naming**: PascalCase for assets, IA_* for Input Actions, BP_* for Blueprints
+- **Path Organization**: Logical folder structure (/Game/Characters/, /Game/UI/, /Game/Levels/)
+- **Performance**: Use TSoftObjectPtr for heavy assets, avoid runtime Data Asset modification
+- **Networking**: Server-authoritative design with RepNotify for state synchronization
+- **Validation**: Always verify Blueprint connections and asset references post-creation

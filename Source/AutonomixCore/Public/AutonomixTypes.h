@@ -780,13 +780,14 @@ struct AUTONOMIXCORE_API FAutonomixHTTPError
 		// All major providers (Anthropic, OpenAI, Google, DeepSeek) return JSON error bodies.
 		// Formats: {"error":{"message":"..."}} (OpenAI/Anthropic) or {"error":{"message":"...", "status":"..."}} (Google)
 		FString CleanMessage;
+		try
 		{
 			TSharedPtr<FJsonObject> ErrJson;
 			TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ResponseBody);
 			if (FJsonSerializer::Deserialize(Reader, ErrJson) && ErrJson.IsValid())
 			{
 				const TSharedPtr<FJsonObject>* ErrorObj = nullptr;
-				if (ErrJson->TryGetObjectField(TEXT("error"), ErrorObj))
+				if (ErrJson->TryGetObjectField(TEXT("error"), ErrorObj) && ErrorObj && *ErrorObj)
 				{
 					(*ErrorObj)->TryGetStringField(TEXT("message"), CleanMessage);
 				}
@@ -796,6 +797,14 @@ struct AUTONOMIXCORE_API FAutonomixHTTPError
 					ErrJson->TryGetStringField(TEXT("message"), CleanMessage);
 				}
 			}
+		}
+		catch (const std::exception& Ex)
+		{
+			UE_LOG(LogAutonomix, Warning, TEXT("Failed to parse error response JSON from %s: %s"), *ProviderName, UTF8_TO_TCHAR(Ex.what()));
+		}
+		catch (...)
+		{
+			UE_LOG(LogAutonomix, Warning, TEXT("Unknown error parsing error response JSON from %s"), *ProviderName);
 		}
 
 		if (Code == 401 || Code == 403)
